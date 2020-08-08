@@ -18,6 +18,12 @@ var generate_check : CheckButton
 var selected_node
 var node_methods = []
 
+const TYPE_NAME = ["any", "bool", "int", "float", "String", "Vector2", "Rect2", 
+	"Vector3", "Transform2D", "Plane", "Quat", "AABB", "Basis", "Transform",
+	"Color", "NodePath", "RID", "Object", "Dictionary", "Array",
+	"PoolByteArray", "PoolIntArray", "PoolRealArray", "PoolStringArray",
+	"PoolVector2Array", "PoolVector3Array", "PoolColorArray"]
+
 
 func _enter_tree():
 	var start = OS.get_ticks_usec()
@@ -68,7 +74,7 @@ func _enter_tree():
 	hbox_name.add_child(generate_check)
 	
 	print("enhanced " + str(dock) + " in " + str(OS.get_ticks_usec() - start) + "us")
-	
+
 
 func _find_ConnectDialog(parent : Node):
 	for node in parent.get_children():
@@ -91,7 +97,6 @@ func _exit_tree():
 	mc1.free()
 	generate_check.free()
 	mc2.free()
-	
 
 
 func _on_name_changed(new_text):
@@ -115,8 +120,17 @@ func _on_node_selected():
 	
 	var list = selected_node.get_script().get_script_method_list()
 	method_list.clear()
+	var idx = 0
 	for method in list:
-		method_list.add_item(method.name)
+		
+		var text = method.name
+		var args = PoolStringArray()
+		for arg in method.args:
+			args.append(TYPE_NAME[arg.type])
+		
+		method_list.add_item("%s(%s)" % [method.name, args.join(", ")])
+		method_list.set_item_metadata(idx, method)
+		idx += 1
 
 
 func refresh_method_list():
@@ -124,5 +138,5 @@ func refresh_method_list():
 
 
 func _on_method_selected(idx):
-	var name = method_list.get_item_text(idx)
-	name_edit.text = name
+	var method = method_list.get_item_metadata(idx)
+	name_edit.text = method.name
