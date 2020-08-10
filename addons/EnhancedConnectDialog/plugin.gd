@@ -15,8 +15,10 @@ var method_list : ItemList
 var msg_label : Label
 var generate_check : CheckButton
 
-var selected_node
+var selected_node : Node
 var node_methods = []
+
+var is_blocking : bool
 
 const TYPE_NAME = ["any", "bool", "int", "float", "String", "Vector2", "Rect2", 
 	"Vector3", "Transform2D", "Plane", "Quat", "AABB", "Basis", "Transform",
@@ -100,7 +102,8 @@ func _exit_tree():
 
 
 func _on_name_changed(new_text):
-	pass
+	if not is_blocking:
+		refresh_method_list(new_text)
 
 
 func _on_node_selected():
@@ -118,12 +121,16 @@ func _on_node_selected():
 #		node_methods.append({name=type, methods=ClassDB.class_get_method_list(type, true)})
 #		type = ClassDB.get_parent_class(type)
 	
-	var list = selected_node.get_script().get_script_method_list()
+	node_methods = selected_node.get_script().get_script_method_list()
+	refresh_method_list()
+
+
+func refresh_method_list(filter = null):
 	method_list.clear()
 	var idx = 0
-	for method in list:
-		
-		var text = method.name
+	for method in node_methods:
+		if filter and not filter.is_subsequence_ofi(method.name):
+			continue
 		var args = PoolStringArray()
 		for arg in method.args:
 			args.append(TYPE_NAME[arg.type])
@@ -133,10 +140,8 @@ func _on_node_selected():
 		idx += 1
 
 
-func refresh_method_list():
-	pass
-
-
 func _on_method_selected(idx):
 	var method = method_list.get_item_metadata(idx)
+	is_blocking = true
 	name_edit.text = method.name
+	is_blocking = false
